@@ -39,7 +39,8 @@ module.exports = {
       template: 'build/index.html',
       filename: 'index.html',
       hash: true,
-      minify: false
+      minify: false,
+      meta: { viewport: 'width=device-width, initial-scale=1, shrink-to-fit=no' }
     })
     ]
 }

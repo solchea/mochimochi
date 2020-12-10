@@ -60,27 +60,27 @@ export default class GamePlay extends State {
     left.x = 10;
     left.y = 570;
     left.interactive = true;
-    left.on('mousedown', () => {
+    left.on('pointerdown', () => {
       this.game.key.left.onPress();
-    }).on('mouseup', () => {
+    }).on('pointerup', () => {
       this.game.key.left.onRelease();
     });
     const right = new PIXI.Sprite(PIXI.Loader.shared.resources.right.texture);
     right.x = 100;
     right.y = 570;
     right.interactive = true;
-    right.on('mousedown', () => {
+    right.on('pointerdown', () => {
       this.game.key.right.onPress();
-    }).on('mouseup', () => {
+    }).on('pointerup', () => {
       this.game.key.right.onRelease();
     });
     const rotate = new PIXI.Sprite(PIXI.Loader.shared.resources.rotate.texture);
     rotate.x = 225;
     rotate.y = 570;
     rotate.interactive = true;
-    rotate.on('mousedown', () => {
+    rotate.on('pointerdown', () => {
       this.game.key.up.onPress();
-    }).on('mouseup', () => {
+    }).on('pointerup', () => {
       this.game.key.up.onRelease();
     });
     this.addChild(rotate);
