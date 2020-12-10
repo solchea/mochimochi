@@ -2,7 +2,7 @@
 var express = require('express');
 var path = require('path');
 var serveStatic = require('serve-static');
-var forceDomain = require('forcedomain');
+const { forceDomain } = require('forcedomain');
 
 app = express();
 app.use(forceDomain({
