@@ -30,6 +30,10 @@ app.use(serveStatic(__dirname + '/dist/', {
 //   res.status(404).sendFile(__dirname + '/site/.vuepress/dist/404.html');
 // });
 
+var http = require('http').createServer(app);
 var port = process.env.PORT || 5000;
-app.listen(port);
+http.listen(port);
 console.log('server started ' + port);
+
+
+require('./socket').setupSockets(http);

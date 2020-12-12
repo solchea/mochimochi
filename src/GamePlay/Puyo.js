@@ -1,13 +1,13 @@
 import Block from './Block.js';
-import config from './config.js';
+import config from './../config.js';
 
 export default class Puyo {
-  constructor(x, y) {
-    this.colors = ['blue', 'cyan', 'green', 'orange', 'purple', 'red', 'orange'];
+  constructor(x, y, color1, color2) {
+    this.colors = ['blue', 'cyan', 'green', 'purple', 'red']; // 'orange'];
     this.block1 = new Block(x, y - 1);
-    this.block1.color = this.colors[Math.floor(Math.random() * this.colors.length)];
+    this.block1.color = color1 ? color1 : this.colors[Math.floor(Math.random() * this.colors.length)];
     this.block2 = new Block(x, y - 2);
-    this.block2.color = this.colors[Math.floor(Math.random() * this.colors.length)];
+    this.block2.color = color2 ? color2 : this.colors[Math.floor(Math.random() * this.colors.length)];
     this.rotations = [[1, 0], [0, 1], [-1, 0], [0, -1]];
     this.rotationCtr = 0;
     this.collision = false;

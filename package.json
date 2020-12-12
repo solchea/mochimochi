@@ -12,7 +12,10 @@
   "dependencies": {
     "express": "^4.17.1",
     "forcedomain": "^2.2.0",
-    "pixi.js": "^5.3.3"
+    "pixi-text-input": "^1.0.5",
+    "pixi.js": "^5.3.3",
+    "socket.io": "^3.0.4",
+    "socket.io-client": "^3.0.4"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",

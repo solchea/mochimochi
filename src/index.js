@@ -3,8 +3,8 @@ import config from './config.js';
 import Game from './Game';
 
 const app = new PIXI.Application({
-  width: config.display.width,
-  height: config.display.height + config.display.menuHeight + config.display.controlsHeight
+  width: config.display.width + config.display.menuWidth,
+  height: config.display.height + config.display.controlsHeight
 })
 
 document.body.appendChild(app.view)

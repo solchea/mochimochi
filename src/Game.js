@@ -1,9 +1,13 @@
 import * as PIXI from 'pixi.js';
 
+import io from 'socket.io-client';
+
 import Keyboard from './Keyboard';
-import GamePlay from './GamePlay';
-import GameOver from './GameOver';
-import GamePaused from './GamePaused';
+import GamePlay from './GamePlay/GamePlay';
+import GameOver from './screens/GameOver';
+import GamePaused from './screens/GamePaused';
+import Welcome from './screens/Welcome';
+import Waiting from './screens/Waiting';
 
 
 /**
@@ -15,6 +19,9 @@ export default class Game {
 
     this.gameStates = {};
     this.state = null;
+    this.socket = io();
+    this.onlineGameId = false;
+    this.onlineBlocks = false;
   }
 
   /**
@@ -35,9 +42,11 @@ export default class Game {
     this.addState('pause', new GamePaused(this));
     // this.addState('menu', new GameMenu(this));
     this.addState('gameover', new GameOver(this));
+    this.addState('welcome', new Welcome(this, this.app));
+    this.addState('waiting', new Waiting(this, this.app));
 
     // set initial state
-    this.setState('play');
+    this.setState('welcome');
 
     // start the updates
     this.app.ticker.add(this.update, this);
