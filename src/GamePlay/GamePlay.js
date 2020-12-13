@@ -34,6 +34,8 @@ export default class GamePlay extends State {
         const block = new PIXI.Sprite(this.sheet.textures['black']);
         block.x = colCtr * this.blockSize;
         block.y = rowCtr * this.blockSize;
+        block.height = this.blockSize;
+        block.width = this.blockSize;
         block.color = 'black';
         block.locked = false;
         this.addChild(block);
@@ -62,59 +64,54 @@ export default class GamePlay extends State {
 
     const left = new PIXI.Sprite(PIXI.Loader.shared.resources.left.texture);
     left.x = 5;
-    left.y = config.display.height + config.display.controlsHeight - 65;
-    left.width = 60;
-    left.height = 60;
+    left.y = config.display.height - (config.display.blockSize * 1.75);
+    left.width = config.display.blockSize * 1.5;
+    left.height = config.display.blockSize * 1.5;
     left.interactive = true;
     left.on('pointerdown', () => {
-      this.game.key.left.onPress();
-    }).on('pointerup', () => {
-      this.game.key.left.onRelease();
+      this.puyo.updatePosition(-1, 0, 'left');
     });
     const right = new PIXI.Sprite(PIXI.Loader.shared.resources.right.texture);
-    right.x = 70;
-    right.y = config.display.height + config.display.controlsHeight - 65;
-    right.height = 60;
-    right.width = 60;
+    right.x = 10 + (config.display.blockSize * 1.5);
+    right.y = config.display.height - (config.display.blockSize * 1.75);
+    right.height = config.display.blockSize * 1.5;
+    right.width = config.display.blockSize * 1.5;
     right.interactive = true;
     right.on('pointerdown', () => {
-      this.game.key.right.onPress();
-    }).on('pointerup', () => {
-      this.game.key.right.onRelease();
+      this.puyo.updatePosition(1, 0, 'right');
     });
     const rotate = new PIXI.Sprite(PIXI.Loader.shared.resources.rotate.texture);
-    rotate.x = config.display.width + config.display.menuWidth - 65;
-    rotate.y = config.display.height + config.display.controlsHeight - 65;
-    rotate.height = 60;
-    rotate.width = 60;
+    rotate.x = config.display.width - (config.display.blockSize * 1.5) - 5;
+    rotate.y = config.display.height - (config.display.blockSize * 1.75);
+    rotate.height = config.display.blockSize * 1.5;
+    rotate.width = config.display.blockSize * 1.5;
     rotate.interactive = true;
     rotate.on('pointerdown', () => {
-      this.game.key.up.onPress();
-    }).on('pointerup', () => {
-      this.game.key.up.onRelease();
+      this.puyo.rotate();
     });
+
     this.addChild(rotate);
     this.addChild(left);
     this.addChild(right);
 
     let leftBorder = new PIXI.Graphics();
     // Move it to the beginning of the line
-    leftBorder.position.set(config.display.width, 0);
+    leftBorder.position.set(config.display.width - (2 * config.display.blockSize), 0);
 
     // Draw the line (endPoint should be relative to myGraph's position)
     leftBorder.lineStyle(2, 0xffffff)
       .moveTo(0, 0)
-      .lineTo(0, config.display.height);
+      .lineTo(0, config.display.height - (2 * config.display.blockSize));
     this.addChild(leftBorder);
 
     let bottomBorder = new PIXI.Graphics();
     // Move it to the beginning of the line
-    bottomBorder.position.set(0, config.display.height);
+    bottomBorder.position.set(0, config.display.height - (2 * config.display.blockSize));
 
     // Draw the line (endPoint should be relative to myGraph's position)
     bottomBorder.lineStyle(2, 0xffffff)
       .moveTo(0, 0)
-      .lineTo(config.display.width + config.display.menuWidth, 0);
+      .lineTo(config.display.width, 0);
     this.addChild(bottomBorder);
 
   }
@@ -131,11 +128,15 @@ export default class GamePlay extends State {
     }
     this.nextPuyoBlocks = new Array(2);
     this.nextPuyoBlocks[0] = new PIXI.Sprite(this.sheet.textures[this.nextPuyo.block2.color]);
-    this.nextPuyoBlocks[0].x = config.display.width + config.display.menuWidth - this.blockSize;
+    this.nextPuyoBlocks[0].x = config.display.width - (this.blockSize * 1.5);
     this.nextPuyoBlocks[0].y = 0;
+    this.nextPuyoBlocks[0].height = this.blockSize;
+    this.nextPuyoBlocks[0].width = this.blockSize;
     this.nextPuyoBlocks[1] = new PIXI.Sprite(this.sheet.textures[this.nextPuyo.block1.color]);
-    this.nextPuyoBlocks[1].x = config.display.width + config.display.menuWidth - this.blockSize;
+    this.nextPuyoBlocks[1].x = config.display.width - (this.blockSize * 1.5);
     this.nextPuyoBlocks[1].y = this.blockSize;
+    this.nextPuyoBlocks[1].height = this.blockSize;
+    this.nextPuyoBlocks[1].width = this.blockSize;
 
     this.addChild(this.nextPuyoBlocks[0])
     this.addChild(this.nextPuyoBlocks[1])

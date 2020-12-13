@@ -1,5 +1,3 @@
-const SPRITE_SIZE = 32;
-
 export const game = {
   // board dimensions
   cols: 6,
@@ -14,13 +12,15 @@ export const game = {
   dropModifier: 10
 }
 
+const minSpriteWidth = Math.floor(window.innerWidth / (game.cols + 2));
+const minSpriteHeight = Math.floor(window.innerHeight / (game.rows + 2));
+const SPRITE_SIZE = minSpriteWidth < minSpriteHeight ? minSpriteWidth : minSpriteHeight;
+
 export const display = {
   // currently hardcoded block sprite size
   blockSize: SPRITE_SIZE,
-  width: game.cols * SPRITE_SIZE,
-  height: game.rows * SPRITE_SIZE,
-  menuWidth: 75,
-  controlsHeight: 70
+  width: game.cols * SPRITE_SIZE + (SPRITE_SIZE * 2),
+  height: game.rows * SPRITE_SIZE + (SPRITE_SIZE * 2)
 }
 
 export const controls = {

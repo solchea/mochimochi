@@ -35,6 +35,7 @@ const setupSockets = (http) => {
       }
       console.log(games[game]);
       socket.join(game);
+      io.to(game).emit('players', games[game].players);
     })
 
     socket.on('players', (game) => {

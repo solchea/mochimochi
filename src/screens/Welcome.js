@@ -1,12 +1,9 @@
 import { Graphics, Sprite, Texture, Text, TextStyle } from 'pixi.js';
 import State from './State';
 import TextInput from 'pixi-text-input';
+import config from './../config';
 
-export const simpleTextStyle = new TextStyle({
-  fontFamily: 'Arial',
-  fontSize: 10,
-  fill: '#F00',
-});
+import { basicTextStyle, makeButton } from './../utils';
 
 export default class Welcome extends State {
   constructor(game, app) {
@@ -30,7 +27,12 @@ export default class Welcome extends State {
   }
 
   enter(opts) {
-    const text = new TextInput({
+
+    const titleText = new Text('Enter game code:', basicTextStyle);
+    titleText.anchor.set(.5, .5);
+    titleText.position.set(config.display.width / 2, config.display.blockSize)
+
+    const gameCode = new TextInput({
       input: {
         fontSize: '12px',
         padding: '10px',
@@ -43,43 +45,30 @@ export default class Welcome extends State {
         disabled: { fill: 0xDBDBDB, rounded: 12 }
       }
     });
-    text.x = 5;
-    text.y = 5;
-    this.input = text;
-    this.addChild(text)
+    gameCode.x = config.display.width / 2 - gameCode.width / 2;
+    gameCode.y = config.display.blockSize * 1.5;
+    this.input = gameCode;
+    this.addChild(gameCode)
 
-    var sprite = new Sprite(Texture.WHITE);
-    sprite.width = 200;
-    sprite.height = 50;
-    sprite.x = 5;
-    sprite.y = 100;
-
-    let buttonText = new Text('Join game', simpleTextStyle);
-    //this.addChild(buttonText);
-
-    //this.addChild(sprite);
-
-    const button = this.makeButton('Join game');
-    button.x = 10;
-    button.y = 200;
-    button.interactive = true;
-    button.on('pointerdown', () => {
+    const joinGameButton = makeButton('Join game');
+    joinGameButton.x = config.display.width / 2 - joinGameButton.width / 2;
+    joinGameButton.y = config.display.blockSize * 3;
+    joinGameButton.on('pointerdown', () => {
       console.log("heelo", this.input.text)
       this.game.socket.emit('join', this.input.text)
     })
 
-    const singlePlayerButton = this.makeButton('Start single player game');
-    singlePlayerButton.x = 10;
-    singlePlayerButton.y = 250;
-    singlePlayerButton.interactive = true;
+    const singlePlayerButton = makeButton('Single Player');
+    singlePlayerButton.x = config.display.width / 2 - singlePlayerButton.width / 2;
+    singlePlayerButton.y = config.display.blockSize * 4.5;
     singlePlayerButton.on('pointerdown', () => {
       this.game.setState('play', {});
-      // console.log('starting');
-      // this.game.socket.emit('start', 'mochi')
     })
 
+    this.addChild(titleText);
+    this.addChild(joinGameButton);
     this.addChild(singlePlayerButton);
-    this.addChild(button);
+
   }
 
   exit(opts) {}
@@ -88,25 +77,6 @@ export default class Welcome extends State {
     if (this.game.key.escape.trigger() || this.game.key.space.trigger()) {
       this.game.setState('play', {});
     }
-  }
-
-  makeButton(text) {
-    var txt = new Text(text, {
-      fontFamily: 'Roboto',
-      fontSize: 12,
-      fontWeight: 'bold'
-    });
-    txt.position.set(7, 7);
-    const graficArea = new Graphics()
-    graficArea
-      .beginFill(0xfbbbbbfbb)
-      .lineStyle(2, 5093036)
-      .drawRect(0, 0, 130, 30)
-      .endFill();
-    const spriteArea = new Sprite(this.app.renderer.generateTexture(graficArea));
-    spriteArea.position.set(300, 300); // edit me
-    spriteArea.addChild(txt);
-    return spriteArea;
   }
 
 }
