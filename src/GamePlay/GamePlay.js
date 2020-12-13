@@ -4,6 +4,8 @@ import config from './../config.js';
 import State from './../screens/State';
 import Puyo from './Puyo.js';
 
+import { debounce } from './../utils';
+
 export default class GamePlay extends State {
   constructor(game) {
     super();
@@ -14,6 +16,19 @@ export default class GamePlay extends State {
     this.blockCtr = 0;
     // console.log(PIXI.Loader.shared);
     this.sheet = PIXI.Loader.shared.resources['./assets/sprites.json'].spritesheet;
+
+    this.moveLeft = debounce(() => {
+      this.direction = 'left';
+      this.puyo.updatePosition(-1, 0, 'left');
+    }, 100);
+    this.moveRight = debounce(() => {
+      this.direction = 'right'
+      this.puyo.updatePosition(1, 0, 'right');
+    }, 100);
+    this.rotate = debounce(() => {
+      this.puyo.rotate();
+    }, 100);
+
 
     this.game.socket.on('attack', (msg) => {
       console.log('attacked', msg);
@@ -69,7 +84,8 @@ export default class GamePlay extends State {
     left.height = config.display.blockSize * 1.5;
     left.interactive = true;
     left.on('pointerdown', () => {
-      this.puyo.updatePosition(-1, 0, 'left');
+      //this.puyo.updatePosition(-1, 0, 'left');
+      this.moveLeft();
     });
     const right = new PIXI.Sprite(PIXI.Loader.shared.resources.right.texture);
     right.x = 10 + (config.display.blockSize * 1.5);
@@ -78,7 +94,8 @@ export default class GamePlay extends State {
     right.width = config.display.blockSize * 1.5;
     right.interactive = true;
     right.on('pointerdown', () => {
-      this.puyo.updatePosition(1, 0, 'right');
+      //this.puyo.updatePosition(1, 0, 'right');
+      this.moveRight();
     });
     const rotate = new PIXI.Sprite(PIXI.Loader.shared.resources.rotate.texture);
     rotate.x = config.display.width - (config.display.blockSize * 1.5) - 5;
@@ -87,7 +104,8 @@ export default class GamePlay extends State {
     rotate.width = config.display.blockSize * 1.5;
     rotate.interactive = true;
     rotate.on('pointerdown', () => {
-      this.puyo.rotate();
+      //this.puyo.rotate();
+      this.rotate();
     });
 
     this.addChild(rotate);
@@ -391,13 +409,16 @@ export default class GamePlay extends State {
     if (this.game.key.escape.trigger() || this.game.key.space.trigger()) {
       this.game.setState('pause', {});
     } else if (this.game.key.left.trigger()) {
-      this.puyo.updatePosition(-1, 0, 'left');
+      //this.puyo.updatePosition(-1, 0, 'left');
+      this.moveLeft();
       this.direction = 'left';
     } else if (this.game.key.right.trigger()) {
-      this.puyo.updatePosition(1, 0, 'right');
+      //this.puyo.updatePosition(1, 0, 'right');
+      this.moveRight();
       this.direction = 'right';
     } else if (this.game.key.up.trigger()) {
-      this.puyo.rotate();
+      this.rotate();
+      //this.puyo.rotate();
     } else if (this.frameCtr > config.game.fallSpeed) {
       this.puyo.updatePosition(0, 1, 'down');
       this.frameCtr = 0;

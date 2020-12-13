@@ -17,15 +17,6 @@ module.exports = {
   optimization: {
     minimizer: [new TerserPlugin()]
   },
-  // optimization: {
-  //   minimizer: [new UglifyJSPlugin({
-  //     uglifyOptions: {
-  //       output: {
-  //         comments: false //use it for removing comments like "/*! ... */"
-  //       }
-  //     }
-  //   })]
-  // },
   plugins: [
     new CopyWebpackPlugin({
       patterns: [
@@ -36,7 +27,7 @@ module.exports = {
       ]
     }),
     new HTMLWebpackPlugin({
-      template: 'build/index.html',
+      template: 'src/index.html',
       filename: 'index.html',
       hash: true,
       minify: false,

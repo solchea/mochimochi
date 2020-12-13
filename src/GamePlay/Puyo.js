@@ -30,27 +30,27 @@ export default class Puyo {
     }
 
     // console.log('updatepositions', this.block1.oldY, this.block2.oldY);
-    // console.log('updatepositions', this.block1.y, this.block2.y);
+    // console.log('updatepositions', this.block1.x, this.block2.x);
   }
 
   updateBoard(board, sheet, direction) {
     let block1Done = false;
     let block2Done = false;
-
+    // console.log('direction', direction, this.block1.x, this.block2.x);
     if ((direction === 'down' && this.block1.y > this.block2.y) ||
       (direction === 'left' && this.block1.x < this.block2.x) ||
       (direction === 'right' && this.block1.x > this.block2.x)) {
-      // console.log("b1");
+      // console.log("b1", this.block1.x);
       block1Done = this.updateBlock(board, this.block1, sheet);
-      // console.log("b2");
+      // console.log("b2", this.block2.x);
       block2Done = this.updateBlock(board, this.block2, sheet);
     } else {
-      // console.log("b2");
+      // console.log("b2", this.block2.x);
       block2Done = this.updateBlock(board, this.block2, sheet);
-      // console.log("b1");
+      // console.log("b1", this.block1.x);
       block1Done = this.updateBlock(board, this.block1, sheet);
     }
-    // console.log('update', this.block1.y, this.block2.y);
+    // console.log('update', this.block1.x, this.block2.x);
     if (block1Done || block2Done) {
       this.collision = true;
     }
@@ -63,7 +63,7 @@ export default class Puyo {
     }
 
     if (block.y >= 0 && board[block.x][block.y].color !== block.color && board[block.x][block.y].color === 'black') {
-      // console.log('a');
+      // console.log('a', board[block.x][block.y].color, block.color);
       board[block.x][block.y].texture = sheet.textures[block.color];
       board[block.x][block.y].color = block.color;
 
@@ -74,7 +74,7 @@ export default class Puyo {
 
       block.reset();
     } else if (block.y >= 0 && board[block.x][block.y].color !== 'black') {
-      // console.log('b')
+      // console.log('b', board[block.x][block.y].color, block.color);
       block.x = block.oldX;
       block.y = block.oldY;
     }
