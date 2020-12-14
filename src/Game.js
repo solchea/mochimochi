@@ -28,19 +28,12 @@ export default class Game {
    * start game, execute after all assets are loaded
    */
   run() {
-    // let background = new PIXI.extras.TilingSprite(
-    //   PIXI.loader.resources.blocks.textures.background,
-    //   this.app.renderer.width,
-    //   this.app.renderer.height);
-    // this.app.stage.addChild(background);
-
     this.key = new Keyboard();
     // this.scores = new ScoreTable();
 
     // define available game states
     this.addState('play', new GamePlay(this));
     this.addState('pause', new GamePaused(this));
-    // this.addState('menu', new GameMenu(this));
     this.addState('gameover', new GameOver(this));
     this.addState('welcome', new Welcome(this, this.app));
     this.addState('waiting', new Waiting(this, this.app));

@@ -50,11 +50,10 @@ export default class Welcome extends State {
     this.input = gameCode;
     this.addChild(gameCode)
 
-    const joinGameButton = makeButton('Join game');
+    const joinGameButton = makeButton('Join Game');
     joinGameButton.x = config.display.width / 2 - joinGameButton.width / 2;
     joinGameButton.y = config.display.blockSize * 3;
     joinGameButton.on('pointerdown', () => {
-      console.log("heelo", this.input.text)
       this.game.socket.emit('join', this.input.text)
     })
 

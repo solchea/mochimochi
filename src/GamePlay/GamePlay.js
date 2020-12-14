@@ -2,9 +2,9 @@ import * as PIXI from 'pixi.js';
 import config from './../config.js';
 
 import State from './../screens/State';
-import Puyo from './Puyo.js';
+import Mochi from './Mochi.js';
 
-import { debounce } from './../utils';
+import { basicTextStyle, boldTextStyle, debounce, titleTextStyle } from './../utils';
 
 export default class GamePlay extends State {
   constructor(game) {
@@ -14,24 +14,24 @@ export default class GamePlay extends State {
     this.rows = config.game.rows;
     this.blockSize = config.display.blockSize;
     this.blockCtr = 0;
-    // console.log(PIXI.Loader.shared);
+    this.inProgress = false;
+    this.runningScore = 0;
     this.sheet = PIXI.Loader.shared.resources['./assets/sprites.json'].spritesheet;
 
     this.moveLeft = debounce(() => {
       this.direction = 'left';
-      this.puyo.updatePosition(-1, 0, 'left');
-    }, 100);
+      this.mochi.updatePosition(-1, 0, 'left');
+    }, 25);
     this.moveRight = debounce(() => {
       this.direction = 'right'
-      this.puyo.updatePosition(1, 0, 'right');
-    }, 100);
+      this.mochi.updatePosition(1, 0, 'right');
+    }, 25);
     this.rotate = debounce(() => {
-      this.puyo.rotate();
-    }, 100);
+      this.mochi.rotate();
+    }, 25);
 
 
     this.game.socket.on('attack', (msg) => {
-      console.log('attacked', msg);
       if (this.game.socket.id !== msg.attackerId) {
         this.readyForAttack = true;
         this.numRowsDrop = msg.numRows;
@@ -41,7 +41,6 @@ export default class GamePlay extends State {
     this.board = new Array(this.cols);
     for (let row = 0; row <= this.cols; row++) {
       this.board[row] = new Array(this.rows);
-      //this.board[row].fill('black');
     }
 
     for (let rowCtr = 0; rowCtr < this.rows; rowCtr++) {
@@ -58,9 +57,40 @@ export default class GamePlay extends State {
       }
     }
 
+    const nextLabel = new PIXI.Text('Next', basicTextStyle);
+    nextLabel.anchor.set(.5, .5);
+    nextLabel.x = config.display.width - this.blockSize;
+    nextLabel.y = this.blockSize / 2;
+    this.addChild(nextLabel);
+
+    this.nextMochiBlocks = new Array(2);
+    this.nextMochiBlocks[0] = new PIXI.Sprite(this.sheet.textures['blue']);
+    this.nextMochiBlocks[0].x = config.display.width - (this.blockSize * 1.5);
+    this.nextMochiBlocks[0].y = this.blockSize;
+    this.nextMochiBlocks[0].height = this.blockSize;
+    this.nextMochiBlocks[0].width = this.blockSize;
+    this.nextMochiBlocks[1] = new PIXI.Sprite(this.sheet.textures['blue']);
+    this.nextMochiBlocks[1].x = config.display.width - (this.blockSize * 1.5);
+    this.nextMochiBlocks[1].y = this.blockSize * 2;
+    this.nextMochiBlocks[1].height = this.blockSize;
+    this.nextMochiBlocks[1].width = this.blockSize;
+
+    this.addChild(this.nextMochiBlocks[0]);
+    this.addChild(this.nextMochiBlocks[1]);
+
+    const scoreLabel = new PIXI.Text('Score', basicTextStyle);
+    scoreLabel.anchor.set(.5, .5);
+    scoreLabel.x = config.display.width - this.blockSize;
+    scoreLabel.y = (this.blockSize * 3) + (this.blockSize / 2);
+    this.addChild(scoreLabel);
+
+    this.score = new PIXI.Text('0000000', boldTextStyle);
+    this.score.anchor.set(.5, .5);
+    this.score.x = config.display.width - this.blockSize;
+    this.score.y = (this.blockSize * 4) + (this.blockSize / 2);
+    this.addChild(this.score);
+
     this.frameCtr = 0;
-
-
     this.gameOver = false;
     this.direction = 'down';
 
@@ -84,7 +114,6 @@ export default class GamePlay extends State {
     left.height = config.display.blockSize * 1.5;
     left.interactive = true;
     left.on('pointerdown', () => {
-      //this.puyo.updatePosition(-1, 0, 'left');
       this.moveLeft();
     });
     const right = new PIXI.Sprite(PIXI.Loader.shared.resources.right.texture);
@@ -94,7 +123,6 @@ export default class GamePlay extends State {
     right.width = config.display.blockSize * 1.5;
     right.interactive = true;
     right.on('pointerdown', () => {
-      //this.puyo.updatePosition(1, 0, 'right');
       this.moveRight();
     });
     const rotate = new PIXI.Sprite(PIXI.Loader.shared.resources.rotate.texture);
@@ -104,7 +132,6 @@ export default class GamePlay extends State {
     rotate.width = config.display.blockSize * 1.5;
     rotate.interactive = true;
     rotate.on('pointerdown', () => {
-      //this.puyo.rotate();
       this.rotate();
     });
 
@@ -112,21 +139,35 @@ export default class GamePlay extends State {
     this.addChild(left);
     this.addChild(right);
 
-    let leftBorder = new PIXI.Graphics();
-    // Move it to the beginning of the line
-    leftBorder.position.set(config.display.width - (2 * config.display.blockSize), 0);
+    for (let row = 1; row < config.game.rows; row++) {
+      const newRow = new PIXI.Graphics();
+      newRow.position.set(0, row * config.display.blockSize);
+      newRow
+        .lineStyle(1, 0xffffff)
+        .moveTo(0, 0)
+        .lineTo(config.display.blockSize * config.game.cols, 0);
+      this.addChild(newRow);
+    }
 
-    // Draw the line (endPoint should be relative to myGraph's position)
+    for (let col = 1; col < config.game.cols; col++) {
+      const newCol = new PIXI.Graphics();
+      newCol.position.set(col * config.display.blockSize, 0);
+      newCol
+        .lineStyle(1, 0xffffff)
+        .moveTo(0, 0)
+        .lineTo(0, config.display.blockSize * config.game.rows);
+      this.addChild(newCol);
+    }
+
+    let leftBorder = new PIXI.Graphics();
+    leftBorder.position.set(config.display.width - (2 * config.display.blockSize), 0);
     leftBorder.lineStyle(2, 0xffffff)
       .moveTo(0, 0)
       .lineTo(0, config.display.height - (2 * config.display.blockSize));
     this.addChild(leftBorder);
 
     let bottomBorder = new PIXI.Graphics();
-    // Move it to the beginning of the line
     bottomBorder.position.set(0, config.display.height - (2 * config.display.blockSize));
-
-    // Draw the line (endPoint should be relative to myGraph's position)
     bottomBorder.lineStyle(2, 0xffffff)
       .moveTo(0, 0)
       .lineTo(config.display.width, 0);
@@ -134,55 +175,88 @@ export default class GamePlay extends State {
 
   }
   enter(opts) {
-    //console.log("gameId", this.game.onlineGameId);
-    if (!this.game.onlineGameId) {
-      //console.log("no blocks")
-      this.puyo = new Puyo(2, 0);
-      this.nextPuyo = new Puyo(2, 0);
-    } else {
-      //console.log("bblocks", this.game.onlineBlocks)
-      this.puyo = new Puyo(2, 0, this.game.onlineBlocks[this.blockCtr++], this.game.onlineBlocks[this.blockCtr++]);
-      this.nextPuyo = new Puyo(2, 0, this.game.onlineBlocks[this.blockCtr++], this.game.onlineBlocks[this.blockCtr++]);
-    }
-    this.nextPuyoBlocks = new Array(2);
-    this.nextPuyoBlocks[0] = new PIXI.Sprite(this.sheet.textures[this.nextPuyo.block2.color]);
-    this.nextPuyoBlocks[0].x = config.display.width - (this.blockSize * 1.5);
-    this.nextPuyoBlocks[0].y = 0;
-    this.nextPuyoBlocks[0].height = this.blockSize;
-    this.nextPuyoBlocks[0].width = this.blockSize;
-    this.nextPuyoBlocks[1] = new PIXI.Sprite(this.sheet.textures[this.nextPuyo.block1.color]);
-    this.nextPuyoBlocks[1].x = config.display.width - (this.blockSize * 1.5);
-    this.nextPuyoBlocks[1].y = this.blockSize;
-    this.nextPuyoBlocks[1].height = this.blockSize;
-    this.nextPuyoBlocks[1].width = this.blockSize;
+    if (!this.inProgress || (opts && opts.restart)) {
 
-    this.addChild(this.nextPuyoBlocks[0])
-    this.addChild(this.nextPuyoBlocks[1])
+      // reset board
+      for (let rowCtr = 0; rowCtr < this.rows; rowCtr++) {
+        for (let colCtr = 0; colCtr < this.cols; colCtr++) {
+          this.board[colCtr][rowCtr].color = 'black';
+          this.board[colCtr][rowCtr].texture = this.sheet.textures['black'];
+          this.board[colCtr][rowCtr].locked = false;
+        }
+      }
+
+      this.blockCtr = 0;
+      this.gameOver = true;
+
+      if (!this.game.onlineGameId) {
+        this.mochi = new Mochi(2, 0);
+        this.nextMochi = new Mochi(2, 0);
+      } else {
+        this.mochi = new Mochi(2, 0, this.game.onlineBlocks[this.blockCtr++], this.game.onlineBlocks[this.blockCtr++]);
+        this.nextMochi = new Mochi(2, 0, this.game.onlineBlocks[this.blockCtr++], this.game.onlineBlocks[this.blockCtr++]);
+      }
+
+      this.nextMochiBlocks[0].texture = this.sheet.textures[this.nextMochi.block2.color];
+      this.nextMochiBlocks[1].texture = this.sheet.textures[this.nextMochi.block1.color];
+
+      this.inProgress = true;
+
+      //countdown
+      const buttonWidth = config.display.blockSize * 6;
+      const buttonHeight = config.display.blockSize * 2;
+
+      var txt = new PIXI.Text('5', titleTextStyle);
+      txt.anchor.set(.5, .5);
+      txt.position.set(buttonWidth / 2, buttonHeight / 2);
+
+      const box = new PIXI.Graphics();
+      box.beginFill(0x3496eb, 1);
+      box.lineStyle(5, 0xffffff);
+      box.drawRect(0, 0, buttonWidth, buttonHeight);
+      box.endFill();
+      box.y = config.display.blockSize * 5;
+
+      box.addChild(txt);
+      this.addChild(box);
+      this.countdown = txt;
+      this.startTime = Date.now() + 6000;
+
+      const countdownId = window.setInterval(() => {
+        const now = Date.now();
+        const diff = Math.floor((this.startTime - now) / 1000);
+
+        if (diff === 0) {
+          this.frameCtr = 0;
+          this.countdown.parent.visible = false;
+          this.gameOver = false;
+          this.runningScore = 0;
+          window.clearInterval(countdownId);
+        }
+
+        this.countdown.text = diff;
+
+      }, 900);
+
+    }
   }
 
   exit(opts) {}
 
   renderBoard() {
-    // console.log('rennnder');
     if (!this.gameOver) {
-      //console.log('new', this.board[5][0].color);
       if (this.clearMatches || this.fallColumns) {
-        //console.log('why am i here', this.clearMatches, this.fallColumns);
         if (this.clearMatches && this.refreshSweep) {
-          // console.log("clearing matches");
-          // console.log("matches", this.matches);
           this.clearBlocks(this.matches);
           this.matches = [];
           this.clearMatches = false;
           this.fallColumns = true;
           this.refreshSweep = false;
         } else if (this.fallColumns && this.refreshSweep) {
-          //console.log("dropping columns", this.columnsToFall);
           this.dropColumns(this.columnsToFall);
           this.refreshSweep = false;
         }
       } else if (this.dropBlocks && this.numRowsDrop > 0) {
-        //console.log("drop bblocks")
         for (let y = 0; y < this.numRowsDrop; y++) {
           for (let x = 0; x < config.game.cols; x++) {
             this.board[x][y].color = 'orange';
@@ -194,17 +268,13 @@ export default class GamePlay extends State {
         this.dropBlocks = false;
         this.numRowsDrop = 0;
         this.blocksFalling = true;
-        //console.log('end drop blocks', this.dropBlocks, this.blocksFalling)
       } else if (this.blocksFalling) {
-        //console.log('blocks falling');
         if (this.refreshSweep) {
           let changeDetected = false;
           for (let y = config.game.rows - 2; y >= 0; y--) {
             for (let x = 0; x < config.game.cols; x++) {
               const block = this.board[x][y];
-              //console.log(x, y, block, this.board[x][y + 1]);
               if (block.color === 'orange' && this.board[x][y + 1].color === 'black') {
-                //console.log("swap")
                 block.color = 'black';
                 block.texture = this.sheet.textures['black'];
                 block.locked = false;
@@ -223,27 +293,26 @@ export default class GamePlay extends State {
 
           this.refreshSweep = false;
         }
-      } else if (this.puyo.updateBoard(this.board, this.sheet, this.direction)) {
+      } else if (this.mochi.updateBoard(this.board, this.sheet, this.direction)) {
         this.sweepForMatches();
 
         if (this.matches.length) {
-          //console.log("we have matches", this.matches);
           this.clearMatches = true;
         } else {
-          this.puyo = this.nextPuyo;
+          this.runningScore += 10;
+          this.score.text = this.runningScore.toString().padStart(7, '0');
+          this.mochi = this.nextMochi;
           if (!this.game.onlineGameId) {
-            this.nextPuyo = new Puyo(2, 0);
+            this.nextMochi = new Mochi(2, 0);
           } else {
-            this.nextPuyo = new Puyo(2, 0, this.game.onlineBlocks[this.blockCtr++], this.game.onlineBlocks[this.blockCtr++]);
+            this.nextMochi = new Mochi(2, 0, this.game.onlineBlocks[this.blockCtr++], this.game.onlineBlocks[this.blockCtr++]);
           }
 
-          this.nextPuyoBlocks[0].texture = this.sheet.textures[this.nextPuyo.block2.color];
-          this.nextPuyoBlocks[1].texture = this.sheet.textures[this.nextPuyo.block1.color];
+          this.nextMochiBlocks[0].texture = this.sheet.textures[this.nextMochi.block2.color];
+          this.nextMochiBlocks[1].texture = this.sheet.textures[this.nextMochi.block1.color];
 
-          //console.log('checkfor game over');
-          if (!this.blocksFalling && this.puyo.collidesBoard(this.board)) {
-            console.log("game over")
-            this.game.setState('gameover', {});
+          if (!this.blocksFalling && this.mochi.collidesBoard(this.board)) {
+            this.game.setState('gameover', { score: this.runningScore });
             this.gameOver = true;
           }
         }
@@ -260,7 +329,6 @@ export default class GamePlay extends State {
   }
 
   dropColumns(columns) {
-    //console.log("dropColumns")
     let changeMade = false;
     for (const col of columns) {
       const boardCol = this.board[col];
@@ -296,7 +364,6 @@ export default class GamePlay extends State {
 
     for (const matchSet of matches) {
       for (const match of matchSet) {
-        // console.log("match", match)
         const x = match[0];
         this.board[match[0]][match[1]].texture = this.sheet.textures['black'];
         this.board[match[0]][match[1]].color = 'black';
@@ -304,7 +371,6 @@ export default class GamePlay extends State {
         columnsToFall[x] = true;
       }
     }
-    // console.log("columnsToFall", columnsToFall)
     for (const [key, col] of Object.entries(columnsToFall)) {
       this.columnsToFall.push(key);
     }
@@ -317,7 +383,6 @@ export default class GamePlay extends State {
     beenChecked[`${x}-${y}`] = true;
 
     if (currentBlockColor === color) {
-      //console.log(x, y, currentBlockColor)
       matchingBlocks.push([x, y]);
     } else {
       return;
@@ -325,25 +390,21 @@ export default class GamePlay extends State {
 
     // top
     if (y - 1 > 0 && this.board[x][y - 1].color !== 'black' && !beenChecked[`${x}-${y-1}`]) {
-      // if (y - 1 > 0 && !this.beenChecked[`${x}-${y-1}`]) {
       this.checkAdjacentBlocks(x, (y - 1), color, matchingBlocks, beenChecked);
     }
 
     // left
     if (x - 1 > 0 && this.board[x - 1][y].color !== 'black' && !beenChecked[`${x-1}-${y}`]) {
-      // if (x - 1 > 0 && !this.beenChecked[`${x-1}-${y}`]) {
       this.checkAdjacentBlocks((x - 1), y, color, matchingBlocks, beenChecked);
     }
 
     // right
     if (x + 1 < config.game.cols && this.board[x + 1][y].color !== 'black' && !beenChecked[`${x+1}-${y}`]) {
-      // if (x + 1 < config.game.cols - 1 && !this.beenChecked[`${x+1}-${y}`]) {
       this.checkAdjacentBlocks((x + 1), y, color, matchingBlocks, beenChecked);
     }
 
     // bottom
     if (y + 1 < config.game.rows && this.board[x][y + 1].color !== 'black' && !beenChecked[`${x}-${y+1}`]) {
-      // if (y + 1 < config.game.rows - 1 && !this.beenChecked[`${x}-${y+1}`]) {
       this.checkAdjacentBlocks(x, (y + 1), color, matchingBlocks, beenChecked);
     }
 
@@ -379,7 +440,6 @@ export default class GamePlay extends State {
   }
 
   sweepForMatches() {
-    // console.log("sweep");
 
     const streakBlocks = {};
 
@@ -392,11 +452,9 @@ export default class GamePlay extends State {
 
           if (streak.length > 3) {
             this.matches.push(streak);
-            // console.log('streak', x, y, streak);
             for (const temp of streak) {
               streakBlocks[`${temp[0]}-${temp[1]}`] = true;
               const ghostBlocks = this.getGhostBlocks(temp[0], temp[1]);
-              //console.log("ghostblocks", ghostBlocks);
               this.matches.push(ghostBlocks);
             }
           }
@@ -409,18 +467,15 @@ export default class GamePlay extends State {
     if (this.game.key.escape.trigger() || this.game.key.space.trigger()) {
       this.game.setState('pause', {});
     } else if (this.game.key.left.trigger()) {
-      //this.puyo.updatePosition(-1, 0, 'left');
       this.moveLeft();
       this.direction = 'left';
     } else if (this.game.key.right.trigger()) {
-      //this.puyo.updatePosition(1, 0, 'right');
       this.moveRight();
       this.direction = 'right';
     } else if (this.game.key.up.trigger()) {
       this.rotate();
-      //this.puyo.rotate();
-    } else if (this.frameCtr > config.game.fallSpeed) {
-      this.puyo.updatePosition(0, 1, 'down');
+    } else if (!this.gameOver && this.frameCtr > config.game.fallSpeed) {
+      this.mochi.updatePosition(0, 1, 'down');
       this.frameCtr = 0;
       this.direction = 'down';
       this.refreshSweep = true;

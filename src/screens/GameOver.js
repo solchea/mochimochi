@@ -1,26 +1,31 @@
 import { Text, TextStyle } from 'pixi.js';
 import State from './State';
 
-export const simpleTextStyle = new TextStyle({
-  fontFamily: 'Arial',
-  fontSize: 18,
-  fill: '#FFF1E9',
-  stroke: '#000000',
-  strokeThickness: 4
-});
+import { titleTextStyle, makeButton } from './../utils';
+
+import config from './../config.js';
 
 export default class GameOver extends State {
   constructor(game) {
     super();
     this.game = game;
+
+    const gameoverText = new Text('Game Over', titleTextStyle);
+    gameoverText.anchor.set(0.5, 0.5);
+    gameoverText.x = config.display.width / 2;
+    gameoverText.y = config.display.blockSize;
+    this.addChild(gameoverText);
+
+    const restart = makeButton('Restart');
+    restart.x = config.display.width / 2 - restart.width / 2;
+    restart.y = config.display.blockSize * 2;
+    restart.on('pointerdown', () => {
+      this.game.setState('play', { restart: true });
+    });
+    this.addChild(restart);
   }
 
-  enter(opts) {
-    const text = new Text('Game over', simpleTextStyle);
-    text.x = 5;
-    text.y = 5;
-    this.addChild(text)
-  }
+  enter(opts) {}
 
   exit(opts) {}
 

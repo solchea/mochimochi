@@ -9,6 +9,21 @@ export const basicTextStyle = new TextStyle({
   align: 'right'
 });
 
+export const boldTextStyle = new TextStyle({
+  fontFamily: 'Arial',
+  fontSize: Math.floor(config.display.blockSize / 3) + 5,
+  fontWeight: 'bold',
+  fill: 0xffffff,
+  align: 'right'
+});
+
+export const titleTextStyle = new TextStyle({
+  fontFamily: 'Arial',
+  fontSize: config.display.blockSize,
+  fill: 0xffffff,
+  align: 'right'
+});
+
 export const makeButton = (text) => {
   const buttonWidth = config.display.blockSize * 3;
   const buttonHeight = Math.floor(config.display.blockSize);
@@ -48,6 +63,8 @@ export const debounce = (func, wait, immediate) => {
 
 export default {
   basicTextStyle,
+  boldTextStyle,
   debounce,
-  makeButton
+  makeButton,
+  titleTextStyle
 };

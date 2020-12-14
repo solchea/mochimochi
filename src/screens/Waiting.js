@@ -1,16 +1,11 @@
 import { Graphics, Sprite, Texture, Text, TextStyle } from 'pixi.js';
 import State from './State';
 import TextInput from 'pixi-text-input';
-import { basicTextStyle, makeButton } from './../utils';
+import { basicTextStyle, makeButton, titleTextStyle } from './../utils';
 
 import config from './../config.js';
 
-export const titleTextStyle = new TextStyle({
-  fontFamily: 'Arial',
-  fontSize: config.display.blockSize,
-  fill: '#FFF',
-  align: 'right'
-});
+
 
 export default class Waiting extends State {
   constructor(game, app) {
@@ -22,6 +17,7 @@ export default class Waiting extends State {
     this.game.socket
       .on('start', (game) => {
         console.log('start', game);
+        this.countdown.visible = true;
 
         const timerId = window.setInterval(() => {
           const now = Date.now();
@@ -52,7 +48,7 @@ export default class Waiting extends State {
 
     this.playersText = playersText;
 
-    const countdown = new Text(`Game starting in\nXXX\nseconds`, { ...basicTextStyle, align: 'center' })
+    const countdown = new Text(`Game starting in\n5\nseconds`, { ...basicTextStyle, align: 'center' })
     countdown.anchor.set(.5, .5);
     countdown.x = config.display.width / 2;
     countdown.y = (config.display.blockSize * 5);
@@ -75,7 +71,6 @@ export default class Waiting extends State {
         console.log("heelo", this.game.onlineGameId)
         this.game.socket.emit('start', this.game.onlineGameId);
         this.startButton.visible = false;
-        this.countdown.visible = true;
       })
       this.startButton = startButton;
       this.addChild(startButton);

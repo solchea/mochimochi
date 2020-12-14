@@ -20,7 +20,6 @@ export default class Block {
   }
 
   updatePosition(x, y) {
-    // console.log(this.color, x, y);
     const newX = this.x + x;
     const newY = this.y + y;
 
@@ -37,9 +36,7 @@ export default class Block {
   }
 
   collidesTopBoard(board) {
-    //console.log(this.y, board[this.x][0].color);
     if (this.y <= 0 && (board[this.x][0].color !== 'black' || board[this.x][1].color !== 'black')) {
-      //console.log("crash")
       return true;
     }
   }

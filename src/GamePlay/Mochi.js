@@ -1,7 +1,7 @@
 import Block from './Block.js';
 import config from './../config.js';
 
-export default class Puyo {
+export default class Mochi {
   constructor(x, y, color1, color2) {
     this.colors = ['blue', 'cyan', 'green', 'purple', 'red']; // 'orange'];
     this.block1 = new Block(x, y - 1);
@@ -113,11 +113,14 @@ export default class Puyo {
   }
 
   rotate() {
-    let rotation = this.rotations[this.rotationCtr];
-    let x = this.block1.x + rotation[0];
-    let y = this.block1.y + rotation[1]
+    let x = -1;
+    let y = 0;
+    while (x < 0 || x >= config.game.cols) {
+      let rotation = this.rotations[this.rotationCtr];
+      x = this.block1.x + rotation[0];
+      y = this.block1.y + rotation[1]
+      this.rotationCtr = (this.rotationCtr + 1) % 4;
+    }
     this.block2.setPosition(x, y);
-    this.rotationCtr = (this.rotationCtr + 1) % 4;
-    //console.log("rotate", this.block1.y, this.block2.y);
   }
 }

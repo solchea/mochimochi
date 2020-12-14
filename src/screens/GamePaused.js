@@ -1,26 +1,23 @@
 import { Text, TextStyle } from 'pixi.js';
 import State from './State';
 
-export const simpleTextStyle = new TextStyle({
-  fontFamily: 'Arial',
-  fontSize: 18,
-  fill: '#FFF1E9',
-  stroke: '#000000',
-  strokeThickness: 4
-});
+import { titleTextStyle } from './../utils';
+
+import config from './../config.js';
 
 export default class GamePaused extends State {
   constructor(game) {
     super();
     this.game = game;
+
+    const pausedText = new Text('Paused', titleTextStyle);
+    pausedText.anchor.set(0.5, 0.5);
+    pausedText.x = config.display.width / 2;
+    pausedText.y = config.display.blockSize;
+    this.addChild(pausedText)
   }
 
-  enter(opts) {
-    const text = new Text('Paused', simpleTextStyle);
-    text.x = 5;
-    text.y = 5;
-    this.addChild(text)
-  }
+  enter(opts) {}
 
   exit(opts) {}
 
