@@ -4,12 +4,14 @@ export const game = {
   rows: 12,
   hiddenRows: 2,
   // number of frames between block falls one row
-  fallSpeed: 15,
+  fallSpeed: 20,
   fallSpeedMin: 3,
   fallSpeedupStep: 2,
   fallSpeedupDelay: 1800,
   // block will fall this time faster when drop key pressed
-  dropModifier: 10
+  dropModifier: 10,
+  backgroundColor: 'black',
+  ghostBlockColor: 'orange'
 }
 
 const minSpriteWidth = Math.floor(window.innerWidth / (game.cols + 2));

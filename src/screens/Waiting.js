@@ -5,8 +5,6 @@ import { basicTextStyle, makeButton, titleTextStyle } from './../utils';
 
 import config from './../config.js';
 
-
-
 export default class Waiting extends State {
   constructor(game, app) {
     super();
@@ -16,7 +14,6 @@ export default class Waiting extends State {
     this.startButton = false;
     this.game.socket
       .on('start', (game) => {
-        console.log('start', game);
         this.countdown.visible = true;
 
         const timerId = window.setInterval(() => {
@@ -61,14 +58,11 @@ export default class Waiting extends State {
   }
 
   enter(opts) {
-    console.log(opts);
-
     if (opts && opts.host) {
       const startButton = makeButton('Start game');
       startButton.x = config.display.width / 2 - (startButton.width / 2);
       startButton.y = config.display.blockSize * 3;
       startButton.on('pointerdown', () => {
-        console.log("heelo", this.game.onlineGameId)
         this.game.socket.emit('start', this.game.onlineGameId);
         this.startButton.visible = false;
       })

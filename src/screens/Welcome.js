@@ -15,13 +15,11 @@ export default class Welcome extends State {
       .on('wait', (game) => {
         this.game.onlineGameId = game.id;
         this.game.onlineBlocks = game.blocks;
-        console.log("waitinig for host to start", game);
         this.game.setState('waiting', {});
       })
       .on('host', (game) => {
         this.game.onlineGameId = game.id;
         this.game.onlineBlocks = game.blocks;
-        console.log("now the host", game);
         this.game.setState('waiting', { host: true });
       })
   }
@@ -72,10 +70,6 @@ export default class Welcome extends State {
 
   exit(opts) {}
 
-  update(dt) {
-    if (this.game.key.escape.trigger() || this.game.key.space.trigger()) {
-      this.game.setState('play', {});
-    }
-  }
+  update(dt) {}
 
 }

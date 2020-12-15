@@ -16,6 +16,9 @@ export default class GamePlay extends State {
     this.blockCtr = 0;
     this.inProgress = false;
     this.runningScore = 0;
+    this.comboCounter = 0;
+    this.maxCombo = 0;
+    this.combos = [];
     this.sheet = PIXI.Loader.shared.resources['./assets/sprites.json'].spritesheet;
 
     this.moveLeft = debounce(() => {
@@ -45,12 +48,12 @@ export default class GamePlay extends State {
 
     for (let rowCtr = 0; rowCtr < this.rows; rowCtr++) {
       for (let colCtr = 0; colCtr < this.cols; colCtr++) {
-        const block = new PIXI.Sprite(this.sheet.textures['black']);
+        const block = new PIXI.Sprite(this.sheet.textures[config.game.backgroundColor]);
         block.x = colCtr * this.blockSize;
         block.y = rowCtr * this.blockSize;
         block.height = this.blockSize;
         block.width = this.blockSize;
-        block.color = 'black';
+        block.color = config.game.backgroundColor;
         block.locked = false;
         this.addChild(block);
         this.board[colCtr][rowCtr] = block;
@@ -180,8 +183,8 @@ export default class GamePlay extends State {
       // reset board
       for (let rowCtr = 0; rowCtr < this.rows; rowCtr++) {
         for (let colCtr = 0; colCtr < this.cols; colCtr++) {
-          this.board[colCtr][rowCtr].color = 'black';
-          this.board[colCtr][rowCtr].texture = this.sheet.textures['black'];
+          this.board[colCtr][rowCtr].color = config.game.backgroundColor;
+          this.board[colCtr][rowCtr].texture = this.sheet.textures[config.game.backgroundColor];
           this.board[colCtr][rowCtr].locked = false;
         }
       }
@@ -231,6 +234,7 @@ export default class GamePlay extends State {
           this.countdown.parent.visible = false;
           this.gameOver = false;
           this.runningScore = 0;
+          this.maxCombo = 0;
           window.clearInterval(countdownId);
         }
 
@@ -259,8 +263,8 @@ export default class GamePlay extends State {
       } else if (this.dropBlocks && this.numRowsDrop > 0) {
         for (let y = 0; y < this.numRowsDrop; y++) {
           for (let x = 0; x < config.game.cols; x++) {
-            this.board[x][y].color = 'orange';
-            this.board[x][y].texture = this.sheet.textures['orange'];
+            this.board[x][y].color = config.game.ghostBlockColor;
+            this.board[x][y].texture = this.sheet.textures[config.game.ghostBlockColor];
             this.board[x][y].locked = true;
           }
         }
@@ -274,13 +278,13 @@ export default class GamePlay extends State {
           for (let y = config.game.rows - 2; y >= 0; y--) {
             for (let x = 0; x < config.game.cols; x++) {
               const block = this.board[x][y];
-              if (block.color === 'orange' && this.board[x][y + 1].color === 'black') {
-                block.color = 'black';
-                block.texture = this.sheet.textures['black'];
+              if (block.color === config.game.ghostBlockColor && this.board[x][y + 1].color === config.game.backgroundColor) {
+                block.color = config.game.backgroundColor;
+                block.texture = this.sheet.textures[config.game.backgroundColor];
                 block.locked = false;
 
-                this.board[x][y + 1].color = 'orange';
-                this.board[x][y + 1].texture = this.sheet.textures['orange'];
+                this.board[x][y + 1].color = config.game.ghostBlockColor;
+                this.board[x][y + 1].texture = this.sheet.textures[config.game.ghostBlockColor];
                 this.board[x][y + 1].locked = true;
                 changeDetected = true;
               }
@@ -299,7 +303,24 @@ export default class GamePlay extends State {
         if (this.matches.length) {
           this.clearMatches = true;
         } else {
-          this.runningScore += 10;
+          let comboScore = 0;
+          if (this.maxCombo < this.comboCounter) {
+            this.maxCombo = this.comboCounter;
+          }
+          for (const [ind, comboSet] of this.combos.entries()) {
+            for (const combo of comboSet) {
+              comboScore += (10 * combo.blocks);
+              comboScore += (5 * combo.ghostBlocks);
+            }
+          }
+          if (this.comboCounter > 1) {
+            if (this.game.onlineGameId) {
+              this.game.socket.emit('attack', { game: this.game.onlineGameId, num: this.comboCounter });
+            }
+          }
+          this.comboCounter = 0;
+          this.combos = [];
+          this.runningScore += 10 + comboScore;
           this.score.text = this.runningScore.toString().padStart(7, '0');
           this.mochi = this.nextMochi;
           if (!this.game.onlineGameId) {
@@ -312,7 +333,11 @@ export default class GamePlay extends State {
           this.nextMochiBlocks[1].texture = this.sheet.textures[this.nextMochi.block1.color];
 
           if (!this.blocksFalling && this.mochi.collidesBoard(this.board)) {
-            this.game.setState('gameover', { score: this.runningScore });
+            this.score.text = '0000000';
+            this.game.setState('gameover', {
+              score: this.runningScore,
+              maxCombo: this.maxCombo
+            });
             this.gameOver = true;
           }
         }
@@ -334,15 +359,15 @@ export default class GamePlay extends State {
       const boardCol = this.board[col];
       const bottomRow = config.game.rows - 1;
       for (let colInd = bottomRow - 1; colInd >= 0; colInd--) {
-        if (boardCol[colInd].color !== 'black') {
+        if (boardCol[colInd].color !== config.game.backgroundColor) {
           //check if it can drop
-          if (boardCol[colInd + 1].color === 'black') {
+          if (boardCol[colInd + 1].color === config.game.backgroundColor) {
             boardCol[colInd + 1].color = boardCol[colInd].color;
             boardCol[colInd + 1].texture = this.sheet.textures[boardCol[colInd].color];
             boardCol[colInd + 1].locked = true;
 
-            boardCol[colInd].color = 'black';
-            boardCol[colInd].texture = this.sheet.textures['black'];
+            boardCol[colInd].color = config.game.backgroundColor;
+            boardCol[colInd].texture = this.sheet.textures[config.game.backgroundColor];
             boardCol[colInd].locked = false;
             changeMade = true;
           }
@@ -357,16 +382,13 @@ export default class GamePlay extends State {
   }
 
   clearBlocks(matches) {
-    if (this.game.onlineGameId) {
-      this.game.socket.emit('attack', { game: this.game.onlineGameId, num: matches.length })
-    }
     const columnsToFall = {};
 
     for (const matchSet of matches) {
       for (const match of matchSet) {
         const x = match[0];
-        this.board[match[0]][match[1]].texture = this.sheet.textures['black'];
-        this.board[match[0]][match[1]].color = 'black';
+        this.board[match[0]][match[1]].texture = this.sheet.textures[config.game.backgroundColor];
+        this.board[match[0]][match[1]].color = config.game.backgroundColor;
         this.board[match[0]][match[1]].locked = false;
         columnsToFall[x] = true;
       }
@@ -377,7 +399,7 @@ export default class GamePlay extends State {
   }
 
   checkAdjacentBlocks(x, y, color, matchingBlocks, beenChecked) {
-    if (beenChecked[`${x}-${y}`] || color === 'orange') return;
+    if (beenChecked[`${x}-${y}`] || color === config.game.backgroundColor) return;
 
     const currentBlockColor = this.board[x][y].color;
     beenChecked[`${x}-${y}`] = true;
@@ -389,22 +411,22 @@ export default class GamePlay extends State {
     }
 
     // top
-    if (y - 1 > 0 && this.board[x][y - 1].color !== 'black' && !beenChecked[`${x}-${y-1}`]) {
+    if (y - 1 > 0 && this.board[x][y - 1].color !== config.game.backgroundColor && !beenChecked[`${x}-${y-1}`]) {
       this.checkAdjacentBlocks(x, (y - 1), color, matchingBlocks, beenChecked);
     }
 
     // left
-    if (x - 1 > 0 && this.board[x - 1][y].color !== 'black' && !beenChecked[`${x-1}-${y}`]) {
+    if (x - 1 > 0 && this.board[x - 1][y].color !== config.game.backgroundColor && !beenChecked[`${x-1}-${y}`]) {
       this.checkAdjacentBlocks((x - 1), y, color, matchingBlocks, beenChecked);
     }
 
     // right
-    if (x + 1 < config.game.cols && this.board[x + 1][y].color !== 'black' && !beenChecked[`${x+1}-${y}`]) {
+    if (x + 1 < config.game.cols && this.board[x + 1][y].color !== config.game.backgroundColor && !beenChecked[`${x+1}-${y}`]) {
       this.checkAdjacentBlocks((x + 1), y, color, matchingBlocks, beenChecked);
     }
 
     // bottom
-    if (y + 1 < config.game.rows && this.board[x][y + 1].color !== 'black' && !beenChecked[`${x}-${y+1}`]) {
+    if (y + 1 < config.game.rows && this.board[x][y + 1].color !== config.game.backgroundColor && !beenChecked[`${x}-${y+1}`]) {
       this.checkAdjacentBlocks(x, (y + 1), color, matchingBlocks, beenChecked);
     }
 
@@ -431,7 +453,7 @@ export default class GamePlay extends State {
 
   checkForGhostBlocks(x, y) {
     if (x >= 0 && x < config.game.cols && y >= 0 && y < config.game.rows) {
-      if (this.board[x][y].color === 'orange') {
+      if (this.board[x][y].color === config.game.ghostBlockColor) {
         return true;
       }
     }
@@ -442,24 +464,36 @@ export default class GamePlay extends State {
   sweepForMatches() {
 
     const streakBlocks = {};
+    const combos = [];
 
     for (let x = 0; x < config.game.cols; x++) {
       for (let y = 0; y < config.game.rows; y++) {
         const currentColor = this.board[x][y].color;
         let beenChecked = {};
-        if (!streakBlocks[`${x}-${y}`] && currentColor !== 'black' && currentColor != 'orange') {
+        if (!streakBlocks[`${x}-${y}`] && currentColor !== config.game.backgroundColor && currentColor != config.game.ghostBlockColor) {
           const streak = this.checkAdjacentBlocks(x, y, currentColor, [], beenChecked);
 
           if (streak.length > 3) {
+            const combo = {
+              blocks: streak.length,
+              ghostBlocks: 0
+            }
             this.matches.push(streak);
             for (const temp of streak) {
               streakBlocks[`${temp[0]}-${temp[1]}`] = true;
               const ghostBlocks = this.getGhostBlocks(temp[0], temp[1]);
               this.matches.push(ghostBlocks);
+              combo.ghostBlocks += ghostBlocks.length;
             }
+            combos.push(combo);
           }
         }
       }
+    }
+
+    if (combos.length > 0) {
+      this.combos.push(combos);
+      this.comboCounter++;
     }
   }
 
